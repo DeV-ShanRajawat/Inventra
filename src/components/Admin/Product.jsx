@@ -9,6 +9,7 @@ export default function Product({ product, setProduct,categories,getProducts }) 
   price: "",
   category: "",
 });
+const [loading, setLoading] = useState(false);
   console.log(editProduct);
 
   function handleEdit(product) {
@@ -31,25 +32,34 @@ await getProducts();
 
 async function handleSubmit(e) {
   e.preventDefault();
+    setLoading(true);
 
   if (editProduct._id) {
 
-    await fetch(`http://localhost:5500/products/${editProduct._id}`, {
-  method: "PUT",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(editProduct),
-});
+ const response = await fetch(
+  `http://localhost:5500/products/${editProduct._id}`,
+  {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(editProduct),
+  }
+);
 
-await getProducts();
+if (response.ok) {
 
-setEditProduct({
-  name: "",
-  poster: "",
-  price: "",
-  category: "",
-});
+  await getProducts();
+
+  setEditProduct({
+    name: "",
+    poster: "",
+    price: "",
+    category: "",
+  });
+
+}
+setLoading(false);
 
   } else {
 
@@ -60,18 +70,29 @@ setEditProduct({
       category: e.target[3].value,
     };
 
-    await fetch("http://localhost:5500/products", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+   const response = await fetch("http://localhost:5500/products", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(data),
+});
 
-    await getProducts();
-  }
+if (response.ok) {
+
+  await getProducts();
+
+  setEditProduct({
+    name: "",
+    poster: "",
+    price: "",
+    category: "",
+  });
+
 }
-
+  }
+  setLoading(false);
+}
   return (
     <div className="space-y-5">
       <div
@@ -109,6 +130,7 @@ setEditProduct({
               <input
                 className="min-h-11 rounded-xl border border-[#dbdade] bg-white px-4 py-2.5 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)]"
                 type="text"
+                required 
                  value={editProduct.name}
                  onChange={(e) =>
                  setEditProduct({
@@ -125,6 +147,7 @@ setEditProduct({
               <input
                 className="min-h-11 rounded-xl border border-[#dbdade] bg-white px-4 py-2.5 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)]"
                 type="text"
+                required
                  value={editProduct.poster || ""}
                 onChange={(e) =>
                 setEditProduct({
@@ -142,6 +165,7 @@ setEditProduct({
               <input
                 className="min-h-11 rounded-xl border border-[#dbdade] bg-white px-4 py-2.5 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)]"
                 type="number"
+                required
                   value={editProduct.price || ""}
                   onChange={(e) =>
                   setEditProduct({
@@ -157,6 +181,7 @@ setEditProduct({
               </span>
               <div className="relative">
                 <select 
+                required
                  value={editProduct.category || ""}
                  onChange={(e) =>
                  setEditProduct({
@@ -165,6 +190,9 @@ setEditProduct({
                   })
                     }
                 className="min-h-11 w-full appearance-none rounded-xl border border-[#dbdade]/70 bg-white/35 px-4 py-2.5 pr-11 text-sm font-semibold text-[#2f2b3d] shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] outline-none backdrop-blur-md transition-all duration-300 hover:border-[#7367f0]/45 hover:bg-white/55 focus:border-[#7367f0] focus:bg-white/70 focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14),inset_0_1px_0_rgba(255,255,255,0.8)]">
+                    <option value="">
+                           Select Category
+                       </option>
                 {
                 categories.map((category, index)=>(
                   <option key={index} value={category.name}>
@@ -189,8 +217,13 @@ setEditProduct({
               </div>
             </label>
 
-            <button className="min-h-11 rounded-xl bg-[#7367f0] px-4 py-2.5 text-sm font-bold text-white shadow-[0_4px_14px_rgba(115,103,240,0.35)] transition-all duration-300 hover:bg-[#675dd8] hover:shadow-[0_8px_20px_rgba(115,103,240,0.32)]">
-               {editProduct._id ? "Update Product" : "Add Product"}
+            <button disabled={loading}
+            className="min-h-11 rounded-xl bg-[#7367f0] px-4 py-2.5 text-sm font-bold text-white shadow-[0_4px_14px_rgba(115,103,240,0.35)] transition-all duration-300 hover:bg-[#675dd8] hover:shadow-[0_8px_20px_rgba(115,103,240,0.32)]">
+                 {
+                    loading
+                        ? (editProduct._id ? "Updating..." : "Adding...")
+                         : (editProduct._id ? "Update Product" : "Add Product")
+                              }
             </button>
           </form>
         </div>
