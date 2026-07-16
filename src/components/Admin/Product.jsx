@@ -2,97 +2,100 @@ import React, { useState } from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 
-export default function Product({ product, setProduct,categories,getProducts }) {
+export default function Product({
+  product,
+  setProduct,
+  categories,
+  getProducts,
+}) {
   const [editProduct, setEditProduct] = useState({
-  name: "",
-  poster: "",
-  price: "",
-  category: "",
-});
-const [loading, setLoading] = useState(false);
+    name: "",
+    poster: "",
+    price: "",
+    category: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   console.log(editProduct);
 
   function handleEdit(product) {
-  console.log(product);
-  setEditProduct(product);
+    console.log(product);
+    setEditProduct(product);
+  }
 
-}
+  async function handleDelete(id) {
+    await fetch(`http://localhost:5500/products/${id}`, {
+      method: "DELETE",
+    });
 
-async function handleDelete(id) {
+    await getProducts();
+  }
 
-   await fetch(`http://localhost:5500/products/${id}`, {
-
-    method: "DELETE",
-
-});
-
-await getProducts();
-
-}
-
-async function handleSubmit(e) {
-  e.preventDefault();
+  async function handleSubmit(e) {
+    e.preventDefault();
     setLoading(true);
 
-  if (editProduct._id) {
+    if (editProduct._id) {
+      const response = await fetch(
+        `http://localhost:5500/products/${editProduct._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(editProduct),
+        },
+      );
 
- const response = await fetch(
-  `http://localhost:5500/products/${editProduct._id}`,
-  {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(editProduct),
+      if (response.ok) {
+        await getProducts();
+
+        setEditProduct({
+          name: "",
+          poster: "",
+          price: "",
+          category: "",
+        });
+      }
+      setLoading(false);
+    } else {
+      let data = {
+        name: e.target[0].value,
+        poster: e.target[1].value,
+        price: e.target[2].value,
+        category: e.target[3].value,
+      };
+
+      const response = await fetch("http://localhost:5500/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        await getProducts();
+
+        setEditProduct({
+          name: "",
+          poster: "",
+          price: "",
+          category: "",
+        });
+      }
+    }
+    setLoading(false);
   }
-);
+  const filteredProducts = product.filter((prod) => {
+  const search = searchTerm.toLowerCase();
 
-if (response.ok) {
-
-  await getProducts();
-
-  setEditProduct({
-    name: "",
-    poster: "",
-    price: "",
-    category: "",
-  });
-
-}
-setLoading(false);
-
-  } else {
-
-    let data = {
-      name: e.target[0].value,
-      poster: e.target[1].value,
-      price: e.target[2].value,
-      category: e.target[3].value,
-    };
-
-   const response = await fetch("http://localhost:5500/products", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(data),
+  return (
+    prod.name.toLowerCase().includes(search) ||
+    prod.category.toLowerCase().includes(search)
+  );
 });
 
-if (response.ok) {
-
-  await getProducts();
-
-  setEditProduct({
-    name: "",
-    poster: "",
-    price: "",
-    category: "",
-  });
-
-}
-  }
-  setLoading(false);
-}
   return (
     <div className="space-y-5">
       <div
@@ -130,14 +133,14 @@ if (response.ok) {
               <input
                 className="min-h-11 rounded-xl border border-[#dbdade] bg-white px-4 py-2.5 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)]"
                 type="text"
-                required 
-                 value={editProduct.name}
-                 onChange={(e) =>
-                 setEditProduct({
+                required
+                value={editProduct.name}
+                onChange={(e) =>
+                  setEditProduct({
                     ...editProduct,
-                name: e.target.value,
-                            })
-                        }
+                    name: e.target.value,
+                  })
+                }
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-semibold text-[#5d596c]">
@@ -148,14 +151,13 @@ if (response.ok) {
                 className="min-h-11 rounded-xl border border-[#dbdade] bg-white px-4 py-2.5 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)]"
                 type="text"
                 required
-                 value={editProduct.poster || ""}
+                value={editProduct.poster || ""}
                 onChange={(e) =>
-                setEditProduct({
-                ...editProduct,
-                poster: e.target.value,
-                })
-                    }
-               
+                  setEditProduct({
+                    ...editProduct,
+                    poster: e.target.value,
+                  })
+                }
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-semibold text-[#5d596c]">
@@ -166,13 +168,13 @@ if (response.ok) {
                 className="min-h-11 rounded-xl border border-[#dbdade] bg-white px-4 py-2.5 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)]"
                 type="number"
                 required
-                  value={editProduct.price || ""}
-                  onChange={(e) =>
+                value={editProduct.price || ""}
+                onChange={(e) =>
                   setEditProduct({
-                 ...editProduct,
-               price: e.target.value,
-                 })
-                   }
+                    ...editProduct,
+                    price: e.target.value,
+                  })
+                }
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-semibold text-[#5d596c]">
@@ -180,25 +182,23 @@ if (response.ok) {
                 Category
               </span>
               <div className="relative">
-                <select 
-                required
-                 value={editProduct.category || ""}
-                 onChange={(e) =>
-                 setEditProduct({
-                ...editProduct,
-                 category: e.target.value,
-                  })
-                    }
-                className="min-h-11 w-full appearance-none rounded-xl border border-[#dbdade]/70 bg-white/35 px-4 py-2.5 pr-11 text-sm font-semibold text-[#2f2b3d] shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] outline-none backdrop-blur-md transition-all duration-300 hover:border-[#7367f0]/45 hover:bg-white/55 focus:border-[#7367f0] focus:bg-white/70 focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14),inset_0_1px_0_rgba(255,255,255,0.8)]">
-                    <option value="">
-                           Select Category
-                       </option>
-                {
-                categories.map((category, index)=>(
-                  <option key={index} value={category.name}>
-                    {category.name}
-                  </option>
-                ))}
+                <select
+                  required
+                  value={editProduct.category || ""}
+                  onChange={(e) =>
+                    setEditProduct({
+                      ...editProduct,
+                      category: e.target.value,
+                    })
+                  }
+                  className="min-h-11 w-full appearance-none rounded-xl border border-[#dbdade]/70 bg-white/35 px-4 py-2.5 pr-11 text-sm font-semibold text-[#2f2b3d] shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] outline-none backdrop-blur-md transition-all duration-300 hover:border-[#7367f0]/45 hover:bg-white/55 focus:border-[#7367f0] focus:bg-white/70 focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14),inset_0_1px_0_rgba(255,255,255,0.8)]"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((category, index) => (
+                    <option key={index} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
                 <span className="pointer-events-none absolute right-3 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-lg bg-[#7367f0]/10 text-[#7367f0]">
                   <svg
@@ -217,24 +217,34 @@ if (response.ok) {
               </div>
             </label>
 
-            <button disabled={loading}
-            className="min-h-11 rounded-xl bg-[#7367f0] px-4 py-2.5 text-sm font-bold text-white shadow-[0_4px_14px_rgba(115,103,240,0.35)] transition-all duration-300 hover:bg-[#675dd8] hover:shadow-[0_8px_20px_rgba(115,103,240,0.32)]">
-                 {
-                    loading
-                        ? (editProduct._id ? "Updating..." : "Adding...")
-                         : (editProduct._id ? "Update Product" : "Add Product")
-                              }
+            <button
+              disabled={loading}
+              className="min-h-11 rounded-xl bg-[#7367f0] px-4 py-2.5 text-sm font-bold text-white shadow-[0_4px_14px_rgba(115,103,240,0.35)] transition-all duration-300 hover:bg-[#675dd8] hover:shadow-[0_8px_20px_rgba(115,103,240,0.32)]"
+            >
+              {loading
+                ? editProduct._id
+                  ? "Updating..."
+                  : "Adding..."
+                : editProduct._id
+                  ? "Update Product"
+                  : "Add Product"}
             </button>
           </form>
         </div>
 
         <div id="productList" className="min-w-0 overflow-hidden bg-white">
-          <div className="flex items-center justify-between border-b border-[#dbdade] px-5 py-4">
+          <div className="flex flex-col gap-3 border-b border-[#dbdade] px-5 py-4 md:flex-row md:items-center md:justify-between">
             <h3 className="text-base font-bold text-[#2f2b3d]">Product List</h3>
-            <span className="text-sm font-medium text-[#6f6b7d]">
-              Inventory overview
-            </span>
+
+            <input
+              type="text"
+              placeholder="Search Product..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-[#dbdade] bg-white px-4 py-2 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)] md:w-72"
+            />
           </div>
+
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] border-collapse text-left text-sm">
               <thead>
@@ -247,42 +257,60 @@ if (response.ok) {
                 </tr>
               </thead>
               <tbody>
-                {product.map((prod, index) => (
-                  <tr
-                    className="border-t border-[#dbdade] text-[#2f2b3d] transition-colors duration-300 hover:bg-[#f8f7fa]"
-                    key={index}
-                  >
-                    <td className="px-3 py-4 font-semibold">{prod.name}</td>
-                    <td className="px-3 py-4">
-                      <img
-                        className="h-10 w-10 rounded-xl border border-[#dbdade] object-cover shadow-sm"
-                        src={prod.poster}
-                        alt={prod.name}
-                        width="50"
-                      />
-                    </td>
-                    <td className="px-3 py-4 font-bold text-[#7367f0]">
-                      ₹{Number(prod.price).toLocaleString("en-IN")}
-                    </td>
-                    <td className="px-3 py-4">
-                      <span className="rounded-lg bg-[#7367f0]/10 px-2.5 py-1 text-xs font-bold text-[#7367f0]">
-                        {prod.category}
-                      </span>
-                    </td>
-                    <td className="space-x-1 px-3 py-4">
-                      <button  
-                      onClick={()=>handleEdit(prod)}
-                      className="rounded-lg border border-[#7367f0]/30 bg-white px-2.5 py-1.5 text-xs font-bold text-[#7367f0] transition-all duration-300 hover:bg-[#7367f0]/10">
-                        Edit
-                      </button>
-                      <button 
-                      onClick={() => handleDelete(prod._id)}
-                      className="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-bold text-red-500 transition-all duration-300 hover:bg-red-50">
-                        Delete
-                      </button>
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((prod, index) => (
+                    <tr
+                      className="border-t border-[#dbdade] text-[#2f2b3d] transition-colors duration-300 hover:bg-[#f8f7fa]"
+                      key={index}
+                    >
+                      <td className="px-3 py-4 font-semibold">{prod.name}</td>
+
+                      <td className="px-3 py-4">
+                        <img
+                          className="h-10 w-10 rounded-xl border border-[#dbdade] object-cover shadow-sm"
+                          src={prod.poster}
+                          alt={prod.name}
+                          width="50"
+                        />
+                      </td>
+
+                      <td className="px-3 py-4 font-bold text-[#7367f0]">
+                        ₹{Number(prod.price).toLocaleString("en-IN")}
+                      </td>
+
+                      <td className="px-3 py-4">
+                        <span className="rounded-lg bg-[#7367f0]/10 px-2.5 py-1 text-xs font-bold text-[#7367f0]">
+                          {prod.category}
+                        </span>
+                      </td>
+
+                      <td className="space-x-1 px-3 py-4">
+                        <button
+                          onClick={() => handleEdit(prod)}
+                          className="rounded-lg border border-[#7367f0]/30 bg-white px-2.5 py-1.5 text-xs font-bold text-[#7367f0] transition-all duration-300 hover:bg-[#7367f0]/10"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(prod._id)}
+                          className="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-bold text-red-500 transition-all duration-300 hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      className="py-8 text-center text-gray-500 font-semibold"
+                    >
+                      No Products Found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
