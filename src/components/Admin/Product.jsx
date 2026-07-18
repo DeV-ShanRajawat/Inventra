@@ -16,6 +16,8 @@ export default function Product({
   });
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState("default");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   console.log(editProduct);
 
   function handleEdit(product) {
@@ -87,14 +89,37 @@ export default function Product({
     }
     setLoading(false);
   }
-  const filteredProducts = product.filter((prod) => {
+const filteredProducts = product.filter((prod) => {
   const search = searchTerm.toLowerCase();
 
-  return (
+  const matchesSearch =
     prod.name.toLowerCase().includes(search) ||
-    prod.category.toLowerCase().includes(search)
-  );
+    prod.category.toLowerCase().includes(search);
+
+  const matchesCategory =
+    selectedCategory === "all" ||
+    prod.category === selectedCategory;
+
+  return matchesSearch && matchesCategory;
 });
+
+const sortedProducts = [...filteredProducts];
+
+if (sortOrder === "az") {
+  sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+if (sortOrder === "za") {
+  sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+}
+
+if (sortOrder === "low") {
+  sortedProducts.sort((a, b) => Number(a.price) - Number(b.price));
+}
+
+if (sortOrder === "high") {
+  sortedProducts.sort((a, b) => Number(b.price) - Number(a.price));
+}
 
   return (
     <div className="space-y-5">
@@ -111,7 +136,7 @@ export default function Product({
           </p>
         </div>
         <span className="rounded-xl bg-[#7367f0]/10 px-3 py-1.5 text-sm font-bold text-[#7367f0]">
-          {product.length} Products
+          {sortedProducts.length} Products
         </span>
       </div>
       <div className="grid overflow-hidden rounded-2xl border border-[#dbdade] bg-white shadow-[0_8px_24px_rgba(47,43,61,0.08)] lg:grid-cols-[16rem_minmax(0,1fr)]">
@@ -236,13 +261,41 @@ export default function Product({
           <div className="flex flex-col gap-3 border-b border-[#dbdade] px-5 py-4 md:flex-row md:items-center md:justify-between">
             <h3 className="text-base font-bold text-[#2f2b3d]">Product List</h3>
 
-            <input
-              type="text"
-              placeholder="Search Product..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-[#dbdade] bg-white px-4 py-2 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)] md:w-72"
-            />
+            <div className="flex flex-col gap-3 md:flex-row">
+              <input
+                type="text"
+                placeholder="Search Product..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-[#dbdade] bg-white px-4 py-2 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 placeholder:text-[#a5a3ae] focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)] md:w-72"
+              />
+
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="rounded-xl border border-[#dbdade] bg-white px-4 py-2 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)]"
+              >
+                <option value="all">All Categories</option>
+
+                {categories.map((category, index) => (
+                  <option key={index} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="rounded-xl border border-[#dbdade] bg-white px-4 py-2 text-sm font-medium text-[#2f2b3d] outline-none transition-all duration-300 focus:border-[#7367f0] focus:shadow-[0_0_0_3px_rgba(115,103,240,0.14)]"
+              >
+                <option value="default">Sort By</option>
+                <option value="az">Name (A → Z)</option>
+                <option value="za">Name (Z → A)</option>
+                <option value="low">Price (Low → High)</option>
+                <option value="high">Price (High → Low)</option>
+              </select>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -257,8 +310,8 @@ export default function Product({
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map((prod, index) => (
+                {sortedProducts.length > 0 ? (
+                  sortedProducts.map((prod, index) => (
                     <tr
                       className="border-t border-[#dbdade] text-[#2f2b3d] transition-colors duration-300 hover:bg-[#f8f7fa]"
                       key={index}
